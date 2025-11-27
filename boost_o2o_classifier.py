@@ -11,26 +11,29 @@ from decision_trees.dectree import DecTree
 from decision_trees.infogain_funcs import gini
 from booster.boost import VotingBoost
 
-from sklearn.svm import LinearSVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from xgboost import XGBClassifier
 
 
-def build_boost_models(ref_y_train: NDArray):
+def build_boost_models(ref_y_train: NDArray, with_id: bool = False):
     ratio = float(sum(ref_y_train == 0)) / sum(ref_y_train == 1)
 
     boost_models = [
+        LogisticRegression(C=1.2),
         LinearSVC(
             class_weight='balanced',  # 关键！解决你的样本不平衡问题
             C=0.8,                    # 正则化系数，推荐 0.5 ~ 1.0 之间
             penalty='l2',             # 默认 L2 正则，对文本数据通常效果最好
             loss='squared_hinge',     # 默认损失函数，计算速度快
             dual=True,                # 文本特征维数高（TF-IDF）时，推荐开启对偶问题
-            max_iter=3000,            # 增加最大迭代次数，防止报 "failed to converge" 警告
+            max_iter=5000,            # 增加最大迭代次数，防止报 "failed to converge" 警告
             random_state=42,          # 固定随机种子，保证结果可复现
             verbose=1                 # 设为 1 可以看训练进度
         ),
+        SVC(kernel='rbf', C=5, gamma='scale', class_weight='balanced'),
         DecTree(max_depth=12, min_sample_count_per_node=2, entropy_func=gini),
         DecisionTreeClassifier(
             criterion='gini',          # CART 标准也是用 Gini 系数
@@ -59,14 +62,21 @@ def build_boost_models(ref_y_train: NDArray):
         ),
     ]
 
+    if with_id:
+        boost_models = [(f"{i}", model) for i, model in enumerate(boost_models)]
+
     return boost_models
 
 
 def run_boost(x_train, x_test, y_train, y_test, model_path, save_path):
     if model_path is None:
-        models = build_boost_models(y_train)
+        models = build_boost_models(y_train, with_id=False)
         boost = VotingBoost(*models)
-        boost.train(x_train, y_train)
+        # boost = VotingClassifier(models, voting="hard")
+        try:
+            boost.train(x_train, y_train)
+        except AttributeError:
+            boost.fit(x_train, y_train)
         utils.save_model(boost, save_path)
     else:
         boost = utils.load_model(model_path, return_only_model=True)
