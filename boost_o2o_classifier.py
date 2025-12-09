@@ -18,7 +18,7 @@ from sklearn.ensemble import RandomForestClassifier, VotingClassifier, GradientB
 from xgboost import XGBClassifier
 
 
-def build_boost_models(ref_y_train: NDArray, with_id: bool = False):
+def build_bagger_models(ref_y_train: NDArray, with_id: bool = False):
     ratio = float(sum(ref_y_train == 0)) / sum(ref_y_train == 1)
 
     boost_models = [
@@ -82,19 +82,19 @@ def build_boost_models(ref_y_train: NDArray, with_id: bool = False):
 
 def run_boost(x_train, x_test, y_train, y_test, model_path, save_path):
     if model_path is None:
-        models = build_boost_models(y_train, with_id=False)
-        boost = VotingBagger(*models)
-        # boost = VotingClassifier(models, voting="hard")
+        models = build_bagger_models(y_train, with_id=False)
+        bagger = VotingBagger(*models)
+        # bagger = VotingClassifier(models, voting="hard")
         try:
-            boost.train(x_train, y_train)
+            bagger.train(x_train, y_train)
         except AttributeError:
-            boost.fit(x_train, y_train)
-        utils.save_model(boost, save_path)
+            bagger.fit(x_train, y_train)
+        utils.save_model(bagger, save_path)
     else:
-        boost = utils.load_model(model_path, return_only_model=True)
+        bagger = utils.load_model(model_path, return_only_model=True)
     
     if x_test is not None:
-        y_pred = boost.predict(x_test)
+        y_pred = bagger.predict(x_test)
     if y_test is not None:
         print(classification_report(y_test, y_pred))
     
