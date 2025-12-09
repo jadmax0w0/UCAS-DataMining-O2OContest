@@ -14,7 +14,7 @@ from booster.boost import VotingBoost
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier, GradientBoostingClassifier
 from xgboost import XGBClassifier
 
 
@@ -51,13 +51,25 @@ def build_boost_models(ref_y_train: NDArray, with_id: bool = False):
             random_state=42
         ),
         XGBClassifier(
-            n_estimators=100,
+            n_estimators=200,
             max_depth=6,              # XGBoost 不喜深树，一般 3-10 之间
             learning_rate=0.1,
             scale_pos_weight=ratio,   # 【最关键】专门应对样本不平衡
             use_label_encoder=False,
             eval_metric='logloss',
             n_jobs=-1,
+            random_state=42,
+            reg_alpha=0.5,
+            objective='binary:logistic',
+            colsample_bytree=0.6,
+        ),
+        GradientBoostingClassifier(
+            n_estimators=200,
+            learning_rate=0.1,
+            max_depth=10,
+            max_features='sqrt',       # 核心：处理高维文本特征
+            min_samples_leaf=10,       # 核心：忽略生僻词造成的过细分裂
+            subsample=0.8,
             random_state=42
         ),
     ]
