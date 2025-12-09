@@ -9,7 +9,7 @@ import o2o_utils as otils
 import sys; sys.path.append(".")
 from decision_trees.dectree import DecTree
 from decision_trees.infogain_funcs import gini
-from booster.boost import VotingBoost
+from bagger.bag import VotingBagger
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC, SVC
@@ -83,7 +83,7 @@ def build_boost_models(ref_y_train: NDArray, with_id: bool = False):
 def run_boost(x_train, x_test, y_train, y_test, model_path, save_path):
     if model_path is None:
         models = build_boost_models(y_train, with_id=False)
-        boost = VotingBoost(*models)
+        boost = VotingBagger(*models)
         # boost = VotingClassifier(models, voting="hard")
         try:
             boost.train(x_train, y_train)

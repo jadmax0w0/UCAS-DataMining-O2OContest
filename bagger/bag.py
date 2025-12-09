@@ -6,7 +6,7 @@ import sys; sys.path.append(".")
 from base_model import BaseModel
 
 
-class VotingBoost(BaseModel):
+class VotingBagger(BaseModel):
     def __init__(
             self,
             *models: BaseModel,
@@ -72,4 +72,4 @@ class VotingBoost(BaseModel):
         #     return
         
         results = [model.predict(x, **kwargs) for model in self.models]
-        return VotingBoost._majority_vote(*results)
+        return VotingBagger._majority_vote(*results)
