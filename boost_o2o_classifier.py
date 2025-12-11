@@ -22,34 +22,7 @@ def build_bagger_models(ref_y_train: NDArray, with_id: bool = False):
     ratio = float(sum(ref_y_train == 0)) / sum(ref_y_train == 1)
 
     boost_models = [
-        LogisticRegression(C=1.2),
-        LinearSVC(
-            class_weight='balanced',  # 关键！解决你的样本不平衡问题
-            C=0.8,                    # 正则化系数，推荐 0.5 ~ 1.0 之间
-            penalty='l2',             # 默认 L2 正则，对文本数据通常效果最好
-            loss='squared_hinge',     # 默认损失函数，计算速度快
-            dual=True,                # 文本特征维数高（TF-IDF）时，推荐开启对偶问题
-            max_iter=5000,            # 增加最大迭代次数，防止报 "failed to converge" 警告
-            random_state=42,          # 固定随机种子，保证结果可复现
-            verbose=1                 # 设为 1 可以看训练进度
-        ),
         SVC(kernel='rbf', C=5, gamma='scale', class_weight='balanced'),
-        DecTree(max_depth=12, min_sample_count_per_node=2, entropy_func=gini),
-        DecisionTreeClassifier(
-            criterion='gini',          # CART 标准也是用 Gini 系数
-            class_weight='balanced',   # 【关键】必须加！针对你的 O2O 数据不平衡
-            max_depth=None,
-            min_samples_leaf=2,
-            ccp_alpha=0.0,             # 之后可以用这个参数做“后剪枝” (Cost Complexity Pruning)
-            random_state=42
-        ),
-        RandomForestClassifier(
-            n_estimators=100,          # 种100棵树
-            class_weight='balanced',   # 同样处理不平衡
-            n_jobs=-1,                 # 开启所有 CPU 核心并行训练，速度飞快
-            max_depth=None,              # 稍微限制一下深度，防止树太深
-            random_state=42
-        ),
         XGBClassifier(
             n_estimators=200,
             max_depth=6,              # XGBoost 不喜深树，一般 3-10 之间
