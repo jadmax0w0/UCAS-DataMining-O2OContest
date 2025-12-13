@@ -79,8 +79,8 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     
-    parser.add_argument("-m", "--model", type=str, default=None)
-    parser.add_argument("-o", "--model-output", type=str, default=None)
+    parser.add_argument("-m", "--model", type=str, default=None, help="Load model from checkpoint")
+    parser.add_argument("-o", "--model-output", type=str, default=None, help="Save path for model checkpoint. If `-m` is also provided, omit `-o`")
     parser.add_argument("-t", "--test", type=str, default=None, help="Save path for result file")
     parser.add_argument("-b", "--test-break", action="store_true", help="Combined with -t, appends a breakpoint before writing out test result file")
     parser.add_argument("--max-text-dim", type=int, default=1600)
@@ -88,6 +88,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if not args.test:
+        ## 仅使用训练集进行训练 & 评测 (默认 80% 训练，20% 评测)
+        # 用法：python bagging_o2o_classifier.py -o model/save/path
         df_train = otils.load_o2o_csv("./train.csv")
         df_test = otils.load_o2o_csv("./test_new.csv", sep=',')
         vectorizer = otils.get_train_test_vectorizer(df_train, df_test, max_feat_dim=None, vectorizer_type='count')
@@ -97,6 +99,8 @@ if __name__ == "__main__":
         run_bagger(x_train, x_val, y_train, y_val, model_path=args.model, save_path=args.model_output)
 
     else:
+        ## 使用全量训练集训练 & 使用给定测试集输出结果
+        # 用法：python bagging_o2o_classifier.py -o model/save/path -t result/save/path
         df_train = otils.load_o2o_csv("./train.csv")
         df_test = otils.load_o2o_csv("./test_new.csv", sep=',')
         vectorizer = otils.get_train_test_vectorizer(df_train, df_test, max_feat_dim=None, vectorizer_type='count')
